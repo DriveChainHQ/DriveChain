@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { WalletContextProvider } from "./components/WalletProvider";
+import { WalletContextProvider } from "./components/Wallet/WalletProvider";
 
 export const metadata: Metadata = {
   title: "DriveChain",
