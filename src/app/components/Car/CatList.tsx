@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import CarCard from './CarCard';
-import { mockCIDs } from '@/lib/carMockList';
 
 type Car = {
   brand: string;
@@ -11,6 +10,7 @@ type Car = {
   year: string;
   mileage: string;
   imageUrl: string;
+  cid: string;
 };
 
 export default function CarList() {
@@ -18,24 +18,25 @@ export default function CarList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCars = async () => {
-      try {
-        const carData = await Promise.all(
-          mockCIDs.map(async (cid) => {
-            const res = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`);
-            return await res.json();
-          })
-        );
-        setCars(carData);
-      } catch (err) {
-        console.error('Error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    const fetchCarsFromLocalStorage = async () => {
+      const cids: string[] = JSON.parse(localStorage.getItem('drivechain_cids') || '[]')
+      const results: Car[] = []
 
-    fetchCars();
-  }, []);
+      for (const cid of cids) {
+        try {
+          const res = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`)
+          const data = await res.json()
+          results.push({ ...data, cid })
+        } catch (err) {
+          console.error('Failed to fetch:', cid)
+        }
+      }
+      setCars(results)
+      setLoading(false)
+    }
+
+    fetchCarsFromLocalStorage()
+  }, [])
 
   if (loading) return <p className="text-center mt-8">Loading cars...</p>;
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { WalletContextProvider } from "./components/Wallet/WalletProvider";
+import Header from "./components/Header/Header";
 
 export const metadata: Metadata = {
   title: "DriveChain",
@@ -15,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <WalletContextProvider>{children}</WalletContextProvider>
+        <WalletContextProvider>
+          <Header />
+          {children}
+        </WalletContextProvider>
       </body>
     </html>
   );
