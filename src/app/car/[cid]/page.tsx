@@ -21,7 +21,7 @@ export default async function CarPage({ params }: CarPageProps) {
 
   try {
     const res = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`, {
-      next: { revalidate: 60 }, // cache for 1 minute
+      next: { revalidate: 60 },
     })
     car = await res.json()
   } catch (err) {
