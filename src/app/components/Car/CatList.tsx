@@ -11,6 +11,8 @@ type Car = {
   mileage: string;
   imageUrl: string;
   cid: string;
+  sold?: boolean,
+  buyer?: string,
 };
 
 export default function CarList() {
