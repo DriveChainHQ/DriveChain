@@ -11,6 +11,7 @@ import {
 } from '@solana/web3.js'
 import { uploadCarToPinata } from '@/lib/pinata'
 
+
 interface CarData {
   brand: string
   model: string
@@ -18,6 +19,7 @@ interface CarData {
   year: string
   mileage: string
   imageUrl: string
+
   sold?: boolean
   buyer?: string
 }
@@ -110,6 +112,7 @@ export default function CarPage({ params }: CarPageProps) {
   }
 
   if (!car) return <div className="text-center mt-20">🔄 Loading...</div>
+
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-6">

@@ -13,6 +13,7 @@ type Car = {
   cid: string;
   sold?: boolean,
   buyer?: string,
+
 };
 
 export default function CarList() {
