@@ -38,6 +38,5 @@ export default function CarCard({ car }: { car: Car }) {
         {car.sold ? 'Already Sold' : 'Buy'}
       </Link>
     </div>
-
   );
 }

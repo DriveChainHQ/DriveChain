@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 'use client'
 
 import Link from 'next/link'
@@ -11,7 +13,6 @@ import {
 } from '@solana/web3.js'
 import { uploadCarToPinata } from '@/lib/pinata'
 
-
 interface CarData {
   brand: string
   model: string
@@ -19,7 +20,6 @@ interface CarData {
   year: string
   mileage: string
   imageUrl: string
-
   sold?: boolean
   buyer?: string
 }
@@ -41,7 +41,7 @@ export default function CarPage({ params }: CarPageProps) {
         const data = await res.json()
         setCar(data)
       } catch (err) {
-        setMessage('❌ Failed to load car data')
+        setMessage(`❌ Failed to load car data: ${err}`)
       }
     }
 
@@ -112,7 +112,6 @@ export default function CarPage({ params }: CarPageProps) {
   }
 
   if (!car) return <div className="text-center mt-20">🔄 Loading...</div>
-
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-6">

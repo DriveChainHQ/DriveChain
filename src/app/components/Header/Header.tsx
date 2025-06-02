@@ -27,6 +27,7 @@ export default function Header() {
           My cars
         </Link>
       </nav>
+
       <WalletMultiButton />
     </header>
   )

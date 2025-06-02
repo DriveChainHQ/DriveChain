@@ -2,8 +2,12 @@
 
 import React, { useState } from 'react'
 import { uploadFileToPinata, uploadCarToPinata } from '@/lib/pinata'
+import { supabase } from '@/lib/supabase'
+import { useWallet } from '@solana/wallet-adapter-react'
 
 export default function UploadCarForm() {
+  const { publicKey } = useWallet()
+
   const [carData, setCarData] = useState({
     brand: '',
     model: '',
@@ -11,6 +15,7 @@ export default function UploadCarForm() {
     year: '',
     mileage: '',
   })
+
   const [file, setFile] = useState<File | null>(null)
   const [ipfsUrl, setIpfsUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -25,19 +30,10 @@ export default function UploadCarForm() {
     }
   }
 
-  const saveCidToLocalStorage = (cid: string) => {
-    const key = 'drivechain_cids'
-    const existing = localStorage.getItem(key)
-    const cids: string[] = existing ? JSON.parse(existing) : []
-    if (!cids.includes(cid)) {
-      cids.push(cid)
-      localStorage.setItem(key, JSON.stringify(cids))
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!file) return alert('Please upload an image of the car.')
+    if (!publicKey) return alert('Please connect your wallet.')
 
     try {
       setLoading(true)
@@ -45,13 +41,31 @@ export default function UploadCarForm() {
       const imageUrl = await uploadFileToPinata(file)
       const fullData = { ...carData, imageUrl }
       const jsonUrl = await uploadCarToPinata(fullData)
-
       const cid = jsonUrl.replace('https://gateway.pinata.cloud/ipfs/', '')
-      saveCidToLocalStorage(cid)
+
       setIpfsUrl(jsonUrl)
+
+      const { error } = await supabase.from('cars').insert([
+        {
+          brand: carData.brand,
+          model: carData.model,
+          vin: carData.vin,
+          year: carData.year,
+          mileage: carData.mileage,
+          image_url: imageUrl,
+          ipfs_url: jsonUrl,
+          cid,
+          owner: publicKey.toBase58(),
+        },
+      ])
+
+      if (error) {
+        console.error('Supabase insert error:', error)
+        alert('Ошибка при сохранении в базу данных.')
+      }
     } catch (err) {
       console.error('Upload error:', err)
-      alert('Something went wrong while uploading to IPFS.')
+      alert('Что-то пошло не так при загрузке.')
     } finally {
       setLoading(false)
     }
