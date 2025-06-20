@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
+import { useWallet } from '@solana/wallet-adapter-react'
 
 interface CarData {
   brand: string
@@ -9,65 +11,40 @@ interface CarData {
   vin: string
   year: string
   mileage: string
-  imageUrl: string
+  image_url: string
+  cid: string
   sold?: boolean
-  buyer?: string,
-  cid: string,
+  buyer?: string
 }
 
 export default function MyCarsPage() {
+  const { publicKey } = useWallet()
   const [cars, setCars] = useState<CarData[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const connectWalletAndLoadCars = async () => {
-      try {
-        const provider = (window as any).solana
-
-        if (!provider || !provider.isPhantom) {
-          alert("Phantom wallet not found!")
-          setLoading(false)
-          return
-        }
-
-        await provider.connect()
-        const key = provider.publicKey?.toBase58()
-        if (!key) {
-          alert("Wallet connection failed.")
-          setLoading(false)
-          return
-        }
-
-
-        const cidsRaw = localStorage.getItem('drivechain_cids')
-        const cids = cidsRaw ? JSON.parse(cidsRaw) : []
-
-        const carPromises = cids.map(async (cid: string) => {
-          try {
-            const res = await fetch(`https://gateway.pinata.cloud/ipfs/${cid}`)
-            const data = await res.json();
-            return {...data, cid}
-          } catch (err) {
-            console.error('Failed to load car:', cid)
-            return null
-          }
-        })
-
-        const allCars = await Promise.all(carPromises)
-        const myCars = allCars.filter(
-          (car) => car && car.sold === true && car.buyer === key
-        )
-
-        setCars(myCars)
+    const loadCars = async () => {
+      if (!publicKey) {
         setLoading(false)
-      } catch (err) {
-        console.error("Wallet or data error", err)
-        setLoading(false)
+        return
       }
+
+      const { data, error } = await supabase
+        .from('cars')
+        .select('*')
+        .eq('owner', publicKey.toBase58())
+
+      if (error) {
+        console.error('Error loading cars:', error)
+      } else {
+        setCars(data)
+      }
+
+      setLoading(false)
     }
 
-    connectWalletAndLoadCars()
-  }, [])
+    loadCars()
+  }, [publicKey])
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
@@ -77,18 +54,16 @@ export default function MyCarsPage() {
 
       {!loading && cars.length === 0 && (
         <p className="text-gray-600">
-          You haven not purchased any cars with this wallet.
+          You haven’t purchased any cars with this wallet.
         </p>
       )}
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cars.map((car, index) => (
-          <Link href={`/car/${car.cid}`}key={index}>
-            <div
-              className="bg-white shadow-md rounded-xl overflow-hidden"
-            >
+          <Link href={`/car/${car.cid}`} key={index}>
+            <div className="bg-white shadow-md rounded-xl overflow-hidden">
               <img
-                src={car.imageUrl}
+                src={car.image_url}
                 alt={`${car.brand} ${car.model}`}
                 className="w-full h-48 object-cover"
               />
@@ -108,10 +83,7 @@ export default function MyCarsPage() {
       </div>
 
       <div className="mt-8">
-        <Link
-          href="/"
-          className="text-blue-600 hover:underline text-sm"
-        >
+        <Link href="/" className="text-blue-600 hover:underline text-sm">
           ⬅ Back to Marketplace
         </Link>
       </div>
