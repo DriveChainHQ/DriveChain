@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client'
 
 import Link from 'next/link'
@@ -22,6 +20,7 @@ interface CarData {
   imageUrl: string
   sold?: boolean
   buyer?: string
+  owners?: string[]
 }
 
 interface CarPageProps {
@@ -87,16 +86,11 @@ export default function CarPage({ params }: CarPageProps) {
         ...car,
         sold: true,
         buyer: publicKey,
+        owners: [...(car?.owners || []), publicKey], 
       }
 
       const newUrl = await uploadCarToPinata(updatedCar)
       const newCid = newUrl.split('/').pop()
-
-      const cidsRaw = localStorage.getItem('drivechain_cids')
-      const currentCids = cidsRaw ? JSON.parse(cidsRaw) : []
-      const updatedCids = currentCids.filter((id: string) => id !== cid)
-      updatedCids.push(newCid)
-      localStorage.setItem('drivechain_cids', JSON.stringify(updatedCids))
 
       const updatedRes = await fetch(`https://gateway.pinata.cloud/ipfs/${newCid}`)
       const updatedData = await updatedRes.json()
@@ -125,15 +119,9 @@ export default function CarPage({ params }: CarPageProps) {
           <h1 className="text-2xl font-bold mb-2">
             {car.brand} {car.model}
           </h1>
-          <p className="text-gray-600 mb-1">
-            <span className="font-medium">Year:</span> {car.year}
-          </p>
-          <p className="text-gray-600 mb-1">
-            <span className="font-medium">VIN:</span> {car.vin}
-          </p>
-          <p className="text-gray-600 mb-4">
-            <span className="font-medium">Mileage:</span> {car.mileage} km
-          </p>
+          <p className="text-gray-600 mb-1"><span className="font-medium">Year:</span> {car.year}</p>
+          <p className="text-gray-600 mb-1"><span className="font-medium">VIN:</span> {car.vin}</p>
+          <p className="text-gray-600 mb-4"><span className="font-medium">Mileage:</span> {car.mileage} km</p>
 
           {car.sold && (
             <div className="text-green-600 font-semibold mb-4">
@@ -144,18 +132,31 @@ export default function CarPage({ params }: CarPageProps) {
           <div className="bg-gray-50 p-4 rounded mb-4">
             <h3 className="text-lg font-semibold mb-2">Maintenance History</h3>
             <ul className="text-sm text-gray-600 space-y-1">
-              <li>Battery check at 12,000 km</li>
-              <li>Brake pad replacement at 25,000 km</li>
-              <li>Software update at 30,000 km</li>
+              <li>🛠 Battery check at 12,000 km</li>
+              <li>🔧 Brake pad replacement at 25,000 km</li>
+              <li>💡 Software update at 30,000 km</li>
             </ul>
           </div>
+
+          {car.owners && car.owners.length > 0 && (
+            <div className="bg-blue-50 p-4 rounded mb-4">
+              <h3 className="text-lg font-semibold mb-2">📜 Ownership History</h3>
+              <ul className="text-sm text-blue-700 space-y-1">
+                {car.owners.map((owner, idx) => (
+                  <li key={idx}>
+                    Owner {idx + 1}: {owner.slice(0, 4)}...{owner.slice(-4)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="flex justify-between items-center flex-wrap gap-2 mb-2">
             <Link
               href="/"
               className="bg-gray-100 text-gray-800 px-4 py-2 rounded hover:bg-gray-200 transition"
             >
-              Back
+              ⬅ Back
             </Link>
 
             <a
@@ -164,7 +165,7 @@ export default function CarPage({ params }: CarPageProps) {
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline text-sm"
             >
-              View on IPFS
+              📄 View on IPFS
             </a>
 
             <button
